@@ -32,8 +32,8 @@ function displayRepo(){
     let name = document.querySelector('#search').value
     let list = document.querySelector('li')
     list.addEventListener('click', () => {
-        const accessToken = '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'
-        fetch(`https://api.github.com/users/${name}/repos?type=all&sort=created&direction=desc&per_page=100&access_token=${accessToken}`, {
+        
+        fetch(`https://api.github.com/users/${username}/repos?type=all&sort=created&direction=desc&per_page=100`, {
             method: 'GET',
             headers: {
                 'Content-Type':'application/json',
