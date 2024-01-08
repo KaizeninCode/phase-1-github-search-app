@@ -1,52 +1,63 @@
-function matchUser(){
-    document.querySelector('#submit').addEventListener('submit', (e) => {
-        e.preventDefault()
-        fetch('https://api.github.com/search/users', {
-            method: 'GET',
-            headers: {
-                'Content-Type':'application/json',
-                Accept: 'application/vnd.github.v3+json',
-            },
-            body: JSON.stringify({
-                query:`username:${document.querySelector("#search").value}`
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            let name = document.querySelector('#search').value
-            for (name in data.items){
-                let list = document.createElement('li')
-                list.innerHTML = `<p>${name}</p>`
-                list.addEventListener('click', displayRepo())
-                document.querySelector('#user-list').appendChild(list)
-            }
-        })
-    })
-}
+const searchForm = document.getElementById('github-form');
+const searchInput = document.getElementById('search');
+const resultsDiv = document.getElementById('github-container');
 
-window.addEventListener('load', () => { //allows all the content to be loaded first, then calls the matchUser function
-    matchUser();
+searchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const searchTerm = searchInput.value.trim();
+    if (!searchTerm) return;
+
+    try {
+        const response = await fetch(`https://api.github.com/search/users?q=${searchTerm}`);
+        const data = await response.json();
+
+        displayResults(data.items);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
 });
 
-function displayRepo(){
-    let name = document.querySelector('#search').value
-    let list = document.querySelector('li')
-    list.addEventListener('click', () => {
-        
-        fetch(`https://api.github.com/users/${username}/repos?type=all&sort=created&direction=desc&per_page=100`, {
-            method: 'GET',
-            headers: {
-                'Content-Type':'application/json',
-                Accept: 'application/vnd.github.v3+json',
-            }            
-        })
-        .then(res => res.json())
-        .then(data => {
-            for(repo in data){
-                let list = document.createElement('li')
-                list.innerHTML = `<p>${repo}</p>`
-                document.querySelector('#repos-list').appendChild(list)                
+function displayResults(users) {
+    resultsDiv.innerHTML = '';
+
+    users.forEach(user => {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'users'
+        userDiv.innerHTML = `
+            <img src="${user.avatar_url}" alt="${user.login}'s avatar" width="50">
+            <p>${user.login}</p>
+            <a href="${user.html_url}">View Profile</a>
+        `;
+
+        userDiv.addEventListener('click', async (e) => {
+            e.preventDefault()
+            try {
+                const response = await fetch(user.repos_url);
+                const data = await response.json();
+
+                displayRepos(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
             }
-        })
-    })
+        });
+
+        resultsDiv.appendChild(userDiv);
+    });
+}
+
+function displayRepos(repos) {
+    resultsDiv.innerHTML = '';
+
+    repos.forEach(repo => {
+        const repoDiv = document.createElement('div');
+        repoDiv.className = 'repos'
+        repoDiv.innerHTML = `
+            <p>${repo.name}</p>
+            <p>${repo.description}</p>
+            <a href="${repo.html_url}">View Repository</a>
+        `;
+
+        resultsDiv.appendChild(repoDiv);
+    });
 }
